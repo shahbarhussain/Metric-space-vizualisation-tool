@@ -93,9 +93,164 @@ def ball_metric_latex(p):
         d_sym = f"d_{{{p}}}"
     return rf"B(a,R) = \{{\, x : {d_sym}(x,a) < R \,\}}"
 
+
+def shape_facts(p, R, dim=2):
+    if dim == 2:
+        if p == 1:
+            return [
+                ("Shape", "Rhombus (diagonals along the axes)"),
+                ("Horizontal diagonal", f"2R = {2*R:.3f}"),
+                ("Vertical diagonal", f"2R = {2*R:.3f}"),
+                ("Sum of diagonals", f"4R = {4*R:.3f}"),
+                ("Side length", f"R√2 = {R*np.sqrt(2):.3f}"),
+                ("Perimeter", f"4√2·R = {4*np.sqrt(2)*R:.3f}"),
+            ]
+        elif p == 2:
+            return [
+                ("Shape", "Circle"),
+                ("Diameter", f"2R = {2*R:.3f}"),
+                ("Circumference", f"2πR = {2*np.pi*R:.3f}"),
+            ]
+        elif p == np.inf:
+            return [
+                ("Shape", "Square (sides parallel to axes)"),
+                ("Side length", f"2R = {2*R:.3f}"),
+                ("Perimeter", f"8R = {8*R:.3f}"),
+                ("Each diagonal", f"2√2·R = {2*np.sqrt(2)*R:.3f}"),
+                ("Sum of diagonals", f"4√2·R = {4*np.sqrt(2)*R:.3f}"),
+            ]
+        else:
+            x, y = minkowski_ball_2d((0, 0), R, p, n_points=2000)
+            seg = np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2)
+            return [
+                ("Shape", f"Lp unit-ball boundary, p = {p}"),
+                ("Perimeter (numerical)", f"{seg.sum():.3f}"),
+            ]
+    else:  # dim == 3
+        if p == 1:
+            return [
+                ("Shape", "Regular octahedron (vertices on the axes)"),
+                ("Each axis diagonal", f"2R = {2*R:.3f}"),
+                ("Sum of diagonals", f"6R = {6*R:.3f}"),
+                ("Edge length", f"R√2 = {R*np.sqrt(2):.3f}"),
+                ("Volume", f"(4/3)R³ = {(4/3)*R**3:.3f}"),
+            ]
+        elif p == 2:
+            return [
+                ("Shape", "Sphere"),
+                ("Diameter", f"2R = {2*R:.3f}"),
+                ("Surface area", f"4πR² = {4*np.pi*R**2:.3f}"),
+                ("Volume", f"(4/3)πR³ = {(4/3)*np.pi*R**3:.3f}"),
+            ]
+        elif p == np.inf:
+            return [
+                ("Shape", "Cube (sides parallel to axes)"),
+                ("Side length", f"2R = {2*R:.3f}"),
+                ("Surface area", f"24R² = {24*R**2:.3f}"),
+                ("Volume", f"8R³ = {8*R**3:.3f}"),
+                ("Each space diagonal", f"2√3·R = {2*np.sqrt(3)*R:.3f}"),
+            ]
+        else:
+            return [
+                ("Shape", f"Lp unit-ball surface, p = {p}"),
+                ("Note", "No closed form in your notes for general p in 3D"),
+            ]
+
+
+def show_shape_facts(p, R, dim=2):
+    st.markdown("**Shape geometry:**")
+    for label, value in shape_facts(p, R, dim):
+        st.markdown(f"- **{label}:** {value}")
+
+
+def add_shape_annotations_2d(fig, center, R, p, color=None):
+    a1, a2 = center
+    line_color = color if color else "gray"
+    dash_style = dict(color=line_color, dash="dot", width=2)
+
+    if p == 1:
+        # horizontal diagonal: length 2R
+        fig.add_trace(go.Scatter(
+            x=[a1 - R, a1 + R], y=[a2, a2], mode="lines+text",
+            line=dash_style, text=["", "2R"], textposition="top center",
+            showlegend=False,
+        ))
+        # vertical diagonal: length 2R -> together, sum of diagonals = 4R
+        fig.add_trace(go.Scatter(
+            x=[a1, a1], y=[a2 - R, a2 + R], mode="lines+text",
+            line=dash_style, text=["", "2R"], textposition="middle right",
+            showlegend=False,
+        ))
+    elif p == 2:
+        # radius line from center to boundary: length R
+        fig.add_trace(go.Scatter(
+            x=[a1, a1 + R], y=[a2, a2], mode="lines+text",
+            line=dash_style, text=["", "R"], textposition="top center",
+            showlegend=False,
+        ))
+    elif p == np.inf:
+        # main diagonal of the square: length 2*sqrt(2)*R
+        fig.add_trace(go.Scatter(
+            x=[a1 - R, a1 + R], y=[a2 - R, a2 + R], mode="lines+text",
+            line=dash_style, text=["", "2√2·R"], textposition="top center",
+            showlegend=False,
+        ))
+        # top side of the square: length 2R
+        fig.add_trace(go.Scatter(
+            x=[a1 - R, a1 + R], y=[a2 + R, a2 + R], mode="lines+text",
+            line=dict(color=line_color, dash="dash", width=2),
+            text=["", "2R"], textposition="top center",
+            showlegend=False,
+        ))
+    else:
+        # no closed form for general p -> just show the radius to one boundary
+        # point (theta=0), labeled with its numerical length
+        bx, by = minkowski_ball_2d(center, R, p, n_points=2)
+        fig.add_trace(go.Scatter(
+            x=[a1, bx[0]], y=[a2, by[0]], mode="lines+text",
+            line=dash_style, text=["", f"R = {R:.2f}"], textposition="top center",
+            showlegend=False,
+        ))
+
+
+def add_shape_annotations_3d(fig, center, R, p):
+    """3D analogue of add_shape_annotations_2d — axis diagonals, radius, or cube diagonal."""
+    a1, a2, a3 = center
+    dash_style = dict(color="gray", dash="dot", width=4)
+
+    if p == 1:
+        # three axis diagonals of the octahedron, each length 2R (sum = 6R)
+        fig.add_trace(go.Scatter3d(x=[a1 - R, a1 + R], y=[a2, a2], z=[a3, a3],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", "2R"], showlegend=False))
+        fig.add_trace(go.Scatter3d(x=[a1, a1], y=[a2 - R, a2 + R], z=[a3, a3],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", "2R"], showlegend=False))
+        fig.add_trace(go.Scatter3d(x=[a1, a1], y=[a2, a2], z=[a3 - R, a3 + R],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", "2R"], showlegend=False))
+    elif p == 2:
+        # radius line from center to boundary: length R
+        fig.add_trace(go.Scatter3d(x=[a1, a1 + R], y=[a2, a2], z=[a3, a3],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", "R"], showlegend=False))
+    elif p == np.inf:
+        # main space diagonal of the cube: length 2*sqrt(3)*R
+        fig.add_trace(go.Scatter3d(x=[a1 - R, a1 + R], y=[a2 - R, a2 + R], z=[a3 - R, a3 + R],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", "2√3·R"], showlegend=False))
+        # one edge of the cube: length 2R
+        fig.add_trace(go.Scatter3d(x=[a1 - R, a1 + R], y=[a2 + R, a2 + R], z=[a3 + R, a3 + R],
+                                    mode="lines+text", line=dict(color="darkgreen", dash="dot", width=4),
+                                    text=["", "2R"], showlegend=False))
+    else:
+        fig.add_trace(go.Scatter3d(x=[a1, a1 + R], y=[a2, a2], z=[a3, a3],
+                                    mode="lines+text", line=dash_style,
+                                    text=["", f"R = {R:.2f}"], showlegend=False))
+
 # App layout
 
-st.title("📐 Metric Space Visualizer")
+st.title(" Metric Space Visualizer")
 st.caption("Interactive companion to unit balls B(a, R) under different metrics on Rⁿ")
 
 mode = st.sidebar.radio(
@@ -103,6 +258,7 @@ mode = st.sidebar.radio(
     ["2D Ball Explorer", "2D Containment Overlay", "3D Ball Explorer", "Distance Calculator"],
 )
 
+# ------------------------------------------------------------
 if mode == "2D Ball Explorer":
     st.sidebar.subheader("Ball parameters")
     a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1)
@@ -127,6 +283,7 @@ if mode == "2D Ball Explorer":
         x=[a1], y=[a2], mode="markers",
         marker=dict(color="black", size=8), name="center a",
     ))
+    add_shape_annotations_2d(fig, (a1, a2), R, p)
     fig.update_layout(
         title=f"B(a, R) under {p_label(p)}",
         xaxis_title="x₁", yaxis_title="x₂",
@@ -137,6 +294,7 @@ if mode == "2D Ball Explorer":
 
     st.latex(dp_metric_latex(p, dim=2))
     st.latex(ball_metric_latex(p))
+    show_shape_facts(p, R, dim=2)
 
     st.markdown(f"""
 **What you're looking at:** the set `{{x : d_p(x, a) < R}}` for `a = ({a1}, {a2})`, `R = {R}`.
@@ -145,6 +303,7 @@ if mode == "2D Ball Explorer":
 - p → ∞ → square
 """)
 
+# ------------------------------------------------------------
 elif mode == "2D Containment Overlay":
     st.sidebar.subheader("Overlay parameters")
     a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="ov_a1")
@@ -155,6 +314,7 @@ elif mode == "2D Containment Overlay":
         options=[1, 1.5, 2, 3, 5, 10, "∞"],
         default=[1, 2, "∞"],
     )
+    show_ref_lines = st.sidebar.checkbox("Show reference lines (diagonals/sides)", value=False)
 
     fig = go.Figure()
     colors = ["crimson", "royalblue", "seagreen", "darkorange", "purple", "brown", "black"]
@@ -166,6 +326,8 @@ elif mode == "2D Containment Overlay":
             line=dict(color=colors[i % len(colors)], width=2),
             name=p_label(p),
         ))
+        if show_ref_lines:
+            add_shape_annotations_2d(fig, (a1, a2), R, p, color=colors[i % len(colors)])
     fig.add_trace(go.Scatter(
         x=[a1], y=[a2], mode="markers",
         marker=dict(color="black", size=8), name="center a",
@@ -181,8 +343,9 @@ elif mode == "2D Containment Overlay":
     for p_choice in p_options:
         p = to_p(p_choice)
         st.latex(dp_metric_latex(p, dim=2))
+        show_shape_facts(p, R, dim=2)
 
-
+# ------------------------------------------------------------
 elif mode == "3D Ball Explorer":
     st.sidebar.subheader("Ball parameters")
     a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="3d_a1")
@@ -192,12 +355,13 @@ elif mode == "3D Ball Explorer":
     p_choice = st.sidebar.select_slider(
         "p (Minkowski order)",
         options=[1, 1.5, 2, 3, 5, 10, "∞"],
-        value=2, key="3d_p",
+        value=1, key="3d_p",
     )
     p = to_p(p_choice)
 
     x, y, z = minkowski_ball_3d((a1, a2, a3), R, p)
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=z, colorscale="Blues", opacity=0.85, showscale=False)])
+    add_shape_annotations_3d(fig, (a1, a2, a3), R, p)
     fig.update_layout(
         title=f"B(a, R) in R³ under {p_label(p)}",
         scene=dict(
@@ -210,6 +374,7 @@ elif mode == "3D Ball Explorer":
 
     st.latex(dp_metric_latex(p, dim=3))
     st.latex(ball_metric_latex(p))
+    show_shape_facts(p, R, dim=3)
 
     st.markdown("""
 - p = 1 → octahedron
@@ -217,11 +382,11 @@ elif mode == "3D Ball Explorer":
 - p → ∞ → cuboid (cube if R is the same in all directions)
 """)
 
-
+# ------------------------------------------------------------
 elif mode == "Distance Calculator":
-    st.sidebar.subheader("Two points in ℝⁿ")
+    st.sidebar.subheader("Two points in Rⁿ")
     n = st.sidebar.selectbox("Dimension n", [2, 3], index=0)
-    st.write(f"Enter coordinates for two points in ℝ^{n}")
+    st.write(f"Enter coordinates for two points in R^{n}")
     cols = st.columns(2)
     point1, point2 = [], []
     with cols[0]:
