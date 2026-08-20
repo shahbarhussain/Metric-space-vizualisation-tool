@@ -96,6 +96,14 @@ def ball_metric_latex(p):
 
 def shape_facts(p, R, dim=2):
     if dim == 2:
+        if p > 0 and p < 1:
+            x, y = minkowski_ball_2d((0, 0), R, p, n_points=2000)
+            seg = np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2)
+            return [
+                ("Shape", f"Non-convex, star-shaped region (p = {p})"),
+                ("Norm status", "Quasi-norm only — triangle inequality fails"),
+                ("Perimeter (numerical)", f"{seg.sum():.3f}"),
+            ]
         if p == 1:
             return [
                 ("Shape", "Rhombus (diagonals along the axes)"),
@@ -266,12 +274,15 @@ if mode == "2D Ball Explorer":
     R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1)
     p_choice = st.sidebar.select_slider(
         "p (Minkowski order)",
-        options=[1, 1.5, 2, 3, 4, 6, 10, 20, "∞"],
+        options=[0.1, 0.2, 0.3, 0.5, 0.75, 0.9, 1, 1.5, 2, 3, 4, 6, 10, 20, "∞"],
         value=2,
     )
     p = to_p(p_choice)
 
     x, y = minkowski_ball_2d((a1, a2), R, p)
+
+    if p > 0 and p < 1:
+        st.header("Beyond Norm: 0 < p < 1 (Triangle Inequality fails⚠️)")
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -296,6 +307,16 @@ if mode == "2D Ball Explorer":
     st.latex(ball_metric_latex(p))
     show_shape_facts(p, R, dim=2)
 
+    if p > 0 and p < 1:
+        st.markdown("---")
+        st.markdown("""
+The expression $\\left(|x_1|^p+|x_2|^p\\right)^{1/p}$ still evaluates to a number for
+$0<p<1$, but it no longer satisfies the **triangle inequality**
+$\\|x+y\\|_p \\le \\|x\\|_p+\\|y\\|_p$. So this isn't a norm — it's a **quasi-norm**, and
+the region above is correspondingly **non-convex** (pinched inward toward the axes)
+instead of the convex balls you get for $p \\ge 1$.
+""")
+
     st.markdown(f"""
 **What you're looking at:** the set `{{x : d_p(x, a) < R}}` for `a = ({a1}, {a2})`, `R = {R}`.
 - p = 1 → diamond (rhombus)
@@ -311,23 +332,29 @@ elif mode == "2D Containment Overlay":
     R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1, key="ov_R")
     p_options = st.sidebar.multiselect(
         "p values to overlay",
-        options=[1, 1.5, 2, 3, 5, 10, "∞"],
-        default=[1, 2, "∞"],
+        options=[0.1, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10, "∞"],
+        default=[0.5, 1, 2, "∞"],
     )
     show_ref_lines = st.sidebar.checkbox("Show reference lines (diagonals/sides)", value=False)
 
     fig = go.Figure()
-    colors = ["crimson", "royalblue", "seagreen", "darkorange", "purple", "brown", "black"]
+    P_COLOR_MAP = {
+        0.1: "#FF1493", 0.2: "#FF4500", 3: "#DAA520", 0.3:"#228B22" , 5: "#FF8C00", 
+        0.9: "#808000", 1:  "#1E90FF" , 1.5: "#008080", 2:"#E31A1C", 0.5: "#4B0082", 0.75: "#9400D3", 
+        10: "#C71585", np.inf: "#000000",
+    }
+    def color_for_p(p):
+        return P_COLOR_MAP.get(p, "#666666")  # fallback gray if p isn't in the map
     for i, p_choice in enumerate(p_options):
         p = to_p(p_choice)
         x, y = minkowski_ball_2d((a1, a2), R, p)
         fig.add_trace(go.Scatter(
             x=x, y=y, mode="lines",
-            line=dict(color=colors[i % len(colors)], width=2),
+            line=dict(color=color_for_p(p), width=2),
             name=p_label(p),
         ))
         if show_ref_lines:
-            add_shape_annotations_2d(fig, (a1, a2), R, p, color=colors[i % len(colors)])
+            add_shape_annotations_2d(fig, (a1, a2), R, p, color=color_for_p(p))
     fig.add_trace(go.Scatter(
         x=[a1], y=[a2], mode="markers",
         marker=dict(color="black", size=8), name="center a",
