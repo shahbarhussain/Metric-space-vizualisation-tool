@@ -269,9 +269,12 @@ mode = st.sidebar.radio(
 # ------------------------------------------------------------
 if mode == "2D Ball Explorer":
     st.sidebar.subheader("Ball parameters")
-    a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1)
-    a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1)
-    R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1)
+    # a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1)
+    # a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1)
+    # R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1)
+    a1=0
+    a2=0
+    R=1
     p_choice = st.sidebar.select_slider(
         "p (Minkowski order)",
         options=[0.1, 0.2, 0.3, 0.5, 0.75, 0.9, 1, 1.5, 2, 3, 4, 6, 10, 20, "∞"],
@@ -327,9 +330,12 @@ instead of the convex balls you get for $p \\ge 1$.
 # ------------------------------------------------------------
 elif mode == "2D Containment Overlay":
     st.sidebar.subheader("Overlay parameters")
-    a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="ov_a1")
-    a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1, key="ov_a2")
-    R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1, key="ov_R")
+    # a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="ov_a1")
+    # a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1, key="ov_a2")
+    # R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1, key="ov_R")
+    a1=0
+    a2=0
+    R=1
     p_options = st.sidebar.multiselect(
         "p values to overlay",
         options=[0.1, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10, "∞"],
@@ -375,10 +381,14 @@ elif mode == "2D Containment Overlay":
 # ------------------------------------------------------------
 elif mode == "3D Ball Explorer":
     st.sidebar.subheader("Ball parameters")
-    a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="3d_a1")
-    a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1, key="3d_a2")
-    a3 = st.sidebar.slider("Center a₃", -5.0, 5.0, 0.0, 0.1, key="3d_a3")
-    R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1, key="3d_R")
+    # a1 = st.sidebar.slider("Center a₁", -5.0, 5.0, 0.0, 0.1, key="3d_a1")
+    # a2 = st.sidebar.slider("Center a₂", -5.0, 5.0, 0.0, 0.1, key="3d_a2")
+    # a3 = st.sidebar.slider("Center a₃", -5.0, 5.0, 0.0, 0.1, key="3d_a3")
+    # R = st.sidebar.slider("Radius R", 0.1, 5.0, 1.0, 0.1, key="3d_R")
+    a1=0
+    a2=0
+    a3=0
+    R=1
     p_choice = st.sidebar.select_slider(
         "p (Minkowski order)",
         options=[1, 1.5, 2, 3, 5, 10, "∞"],
@@ -393,7 +403,7 @@ elif mode == "3D Ball Explorer":
         title=f"B(a, R) in R³ under {p_label(p)}",
         scene=dict(
             xaxis_title="x₁", yaxis_title="x₂", zaxis_title="x₃",
-            aspectmode="cube",
+            aspectmode="cube"
         ),
         width=800, height=800,
     )
